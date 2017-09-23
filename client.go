@@ -35,6 +35,8 @@ func New() *Client {
 func (c *Client) uri(path string, pathArgs ...interface{}) string {
 	return fmt.Sprintf("%s%s", c.rootURI, fmt.Sprintf(path, pathArgs...))
 }
+
+// do a request, return the undread response if no errors and 200 OK
 func (c *Client) doWithResponse(req *http.Request) (*http.Response, error) {
 	if c.cookieAuthToken == "" {
 		return nil, fmt.Errorf("missing auth-token for request")
@@ -46,8 +48,24 @@ func (c *Client) doWithResponse(req *http.Request) (*http.Response, error) {
 	if err != nil {
 		return nil, fmt.Errorf("request failed: %s", err)
 	}
+	// error
+	if resp.StatusCode != http.StatusOK {
+		rawBody, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read %s response payload: %s", resp.Status, err)
+		}
+		if rawBody != nil && len(rawBody) != 0 {
+			var e models.ErrorResponse
+			if err = json.Unmarshal(rawBody, &e); err != nil {
+				return nil, fmt.Errorf("failed to decode %s error payload (%s): %s", resp.Status, string(rawBody), err)
+			}
+			return nil, fmt.Errorf("request failed with %s: %v", resp.Status, e)
+		}
+		return nil, fmt.Errorf("request failed with %s: %s", resp.Status, string(rawBody))
+	}
 	return resp, nil
 }
+
 func (c *Client) do(req *http.Request, decodeTarget interface{}) error {
 	if decodeTarget != nil {
 		if decodeKind := reflect.TypeOf(decodeTarget).Kind(); decodeKind != reflect.Ptr {
@@ -59,29 +77,13 @@ func (c *Client) do(req *http.Request, decodeTarget interface{}) error {
 		return err
 	}
 	defer resp.Body.Close()
-	if resp.StatusCode == http.StatusOK {
-		if decodeTarget != nil {
-			err = json.NewDecoder(resp.Body).Decode(decodeTarget)
-			if err != nil {
-				return fmt.Errorf("failed to decode payload: %s", err)
-			}
+	if decodeTarget != nil {
+		err = json.NewDecoder(resp.Body).Decode(decodeTarget)
+		if err != nil {
+			return fmt.Errorf("failed to decode payload: %s", err)
 		}
-		return nil
 	}
-
-	rawBody, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return fmt.Errorf("failed to read %s response payload: %s", resp.Status, err)
-	}
-	if rawBody != nil && len(rawBody) != 0 {
-		var e models.ErrorResponse
-		if err = json.Unmarshal(rawBody, &e); err != nil {
-			return fmt.Errorf("failed to decode %s error payload (%s): %s", resp.Status, string(rawBody), err)
-		}
-		return fmt.Errorf("request failed with %s: %v", resp.Status, e)
-	} else {
-		return fmt.Errorf("request failed with %s: %s", resp.Status, string(rawBody))
-	}
+	return nil
 }
 
 // https://developer.underarmour.com/docs/v71_User/
