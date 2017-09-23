@@ -68,5 +68,8 @@ func TestClient(t *testing.T) {
 		require.Equal(t, 1, len(gpxRoute.Tracks))
 		// TODO leading and trailing whitespace for name... bad xmlns or bug?
 		require.Equal(t, "RUNNING RUNNERS - 9", strings.TrimSpace(gpxRoute.Tracks[0].Name))
+		require.Equal(t, 10, len(gpxRoute.Tracks[0].Segments[0].Waypoints))
+		require.Equal(t, 41.10955, gpxRoute.Tracks[0].Segments[0].Waypoints[0].Lat)
+		require.Equal(t, -73.418, gpxRoute.Tracks[0].Segments[0].Waypoints[0].Lon)
 	})
 }
