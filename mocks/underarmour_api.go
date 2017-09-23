@@ -113,6 +113,33 @@ func (s *UnderArmourAPI) handleRoute(w http.ResponseWriter, req *http.Request) {
 		w.Write([]byte(`{"_diagnostics":{"validation_failures":[["a filter is required: (user, users, close_to_location, (city, state, country), text_search)"]]},"_links":{"self":[{"href":"\/v7.1\/route\/?limit=20&offset=0"}],"documentation":[{"href":"https:\/\/developer.underarmour.com\/docs\/v71_Route"}]}}`))
 		return
 	}
+	if req.URL.Query().Get("format") == "gpx" {
+		w.Header().Set("Content-Disposition", "attachment; filename=route1784229029.gpx")
+		w.Header().Set("Content-Type", "application/gpx+xml; charset=UTF-8")
+		w.Write([]byte(`
+			<?xml version="1.0" ?>
+<gpx xmlns="http://www.topografix.com/GPX/1/1" xmlns:gpxx="http://www.garmin.com/xmlschemas/GpxExtensions/v3" xmlns:wptx1="http://www.garmin.com/xmlschemas/WaypointExtension/v1" xmlns:gpxtpx="http://www.garmin.com/xmlschemas/TrackPointExtension/v1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" creator="eTrex 10" version="1.1" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd http://www.garmin.com/xmlschemas/GpxExtensions/v3 http://www8.garmin.com/xmlschemas/GpxExtensionsv3.xsd http://www.garmin.com/xmlschemas/WaypointExtension/v1 http://www8.garmin.com/xmlschemas/WaypointExtensionv1.xsd http://www.garmin.com/xmlschemas/TrackPointExtension/v1 http://www.garmin.com/xmlschemas/TrackPointExtensionv1.xsd">
+			 <trk>
+				<name>
+				 RUNNING RUNNERS - 9
+				</name>
+				<trkseg>
+				 <trkpt lat="41.10955" lon="-73.418"/>
+				 <trkpt lat="41.10948" lon="-73.41793"/>
+				 <trkpt lat="41.10941" lon="-73.41788"/>
+				 <trkpt lat="41.10931" lon="-73.41788"/>
+				 <trkpt lat="41.10917" lon="-73.41793"/>
+				 <trkpt lat="41.10909" lon="-73.41794"/>
+				 <trkpt lat="41.10892" lon="-73.41789"/>
+				 <trkpt lat="41.10855" lon="-73.41772"/>
+				 <trkpt lat="41.10945" lon="-73.4179"/>
+				 <trkpt lat="41.10952" lon="-73.41796"/>
+				</trkseg>
+			 </trk>
+			</gpx>
+		`))
+		return
+	}
 	w.Write([]byte(`{
 		"total_descent": -57.9541283985,
 		"city": "Norwalk",

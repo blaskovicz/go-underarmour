@@ -9,6 +9,7 @@ import (
 	"reflect"
 
 	"github.com/blaskovicz/go-underarmour/models"
+	gpx "github.com/ptrv/go-gpx"
 )
 
 const (
@@ -34,22 +35,28 @@ func New() *Client {
 func (c *Client) uri(path string, pathArgs ...interface{}) string {
 	return fmt.Sprintf("%s%s", c.rootURI, fmt.Sprintf(path, pathArgs...))
 }
-
-func (c *Client) do(req *http.Request, decodeTarget interface{}) error {
-	if decodeTarget != nil {
-		if decodeKind := reflect.TypeOf(decodeTarget).Kind(); decodeKind != reflect.Ptr {
-			return fmt.Errorf("invalid decode target type %s (need %s)", decodeKind.String(), reflect.Ptr.String())
-		}
-	}
+func (c *Client) doWithResponse(req *http.Request) (*http.Response, error) {
 	if c.cookieAuthToken == "" {
-		return fmt.Errorf("missing auth-token for request")
+		return nil, fmt.Errorf("missing auth-token for request")
 	}
 	req.AddCookie(&http.Cookie{Name: "auth-token", Value: c.cookieAuthToken})
 	//req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", c.token.AccessToken))
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return fmt.Errorf("request failed: %s", err)
+		return nil, fmt.Errorf("request failed: %s", err)
+	}
+	return resp, nil
+}
+func (c *Client) do(req *http.Request, decodeTarget interface{}) error {
+	if decodeTarget != nil {
+		if decodeKind := reflect.TypeOf(decodeTarget).Kind(); decodeKind != reflect.Ptr {
+			return fmt.Errorf("invalid decode target type %s (need %s)", decodeKind.String(), reflect.Ptr.String())
+		}
+	}
+	resp, err := c.doWithResponse(req)
+	if err != nil {
+		return err
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode == http.StatusOK {
@@ -100,4 +107,17 @@ func (c *Client) ReadRoute(routeID int) (*models.Route, error) {
 		return nil, err
 	}
 	return &r, nil
+}
+
+func (c *Client) ReadRouteGPX(routeID int) (*gpx.Gpx, error) {
+	req, err := http.NewRequest("GET", c.uri("/v7.1/route/%d/?format=gpx&field_set=detailed", routeID), nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %s", err)
+	}
+	resp, err := c.doWithResponse(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	return gpx.Parse(resp.Body)
 }

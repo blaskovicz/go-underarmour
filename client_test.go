@@ -2,6 +2,7 @@ package underarmour
 
 import (
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -50,6 +51,8 @@ func TestClient(t *testing.T) {
 	})
 	t.Run("ReadRoute", func(t *testing.T) {
 		require.NotNil(t, client)
+
+		// std format
 		route, err = client.ReadRoute(1784229029)
 		require.NoError(t, err, "read route failed")
 		require.NotNil(t, route)
@@ -57,5 +60,13 @@ func TestClient(t *testing.T) {
 		require.Equal(t, -57.9541283985, route.TotalDescent)
 		require.Equal(t, 54.1198459896, route.TotalAscent)
 		require.Equal(t, "1784229029", route.Links["self"][0]["id"])
+
+		// gpx format
+		gpxRoute, err := client.ReadRouteGPX(1784229029)
+		require.NoError(t, err, "read gpx route failed")
+		require.NotNil(t, gpxRoute)
+		require.Equal(t, 1, len(gpxRoute.Tracks))
+		// TODO leading and trailing whitespace for name... bad xmlns or bug?
+		require.Equal(t, "RUNNING RUNNERS - 9", strings.TrimSpace(gpxRoute.Tracks[0].Name))
 	})
 }
