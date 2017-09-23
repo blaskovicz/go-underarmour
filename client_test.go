@@ -18,6 +18,7 @@ func TestClient(t *testing.T) {
 	var err error
 	var client *Client
 	var user *models.User
+	var route *models.Route
 	t.Run("Init", func(t *testing.T) {
 		client = New()
 		require.NotNil(t, client, "client was nil")
@@ -46,5 +47,15 @@ func TestClient(t *testing.T) {
 		require.Equal(t, time.Month(7), user.DateJoined.Month())
 		require.Equal(t, 7, user.DateJoined.Day())
 		require.Equal(t, 117774799, user.ID)
+	})
+	t.Run("ReadRoute", func(t *testing.T) {
+		require.NotNil(t, client)
+		route, err = client.ReadRoute(1784229029)
+		require.NoError(t, err, "read route failed")
+		require.NotNil(t, route)
+		require.Equal(t, "RUNNING RUNNERS - 9", route.Name)
+		require.Equal(t, -57.9541283985, route.TotalDescent)
+		require.Equal(t, 54.1198459896, route.TotalAscent)
+		require.Equal(t, "1784229029", route.Links["self"][0]["id"])
 	})
 }

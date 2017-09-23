@@ -79,7 +79,6 @@ func (c *Client) do(req *http.Request, decodeTarget interface{}) error {
 
 // https://developer.underarmour.com/docs/v71_User/
 func (c *Client) ReadUser(userPk string) (*models.User, error) {
-	// TODO figure out what /auth/profile (since it doesnt have card num)
 	req, err := http.NewRequest("GET", c.uri("/v7.1/user/%s/", userPk), nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %s", err)
@@ -89,4 +88,16 @@ func (c *Client) ReadUser(userPk string) (*models.User, error) {
 		return nil, err
 	}
 	return &u, nil
+}
+
+func (c *Client) ReadRoute(routeID int) (*models.Route, error) {
+	req, err := http.NewRequest("GET", c.uri("/v7.1/route/%d/", routeID), nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %s", err)
+	}
+	var r models.Route
+	if err = c.do(req, &r); err != nil {
+		return nil, err
+	}
+	return &r, nil
 }
