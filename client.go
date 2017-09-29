@@ -20,7 +20,7 @@ const (
 type Client struct {
 	rootURI         string
 	cookieAuthToken string
-	accessToken     string // TODO
+	//accessToken     string // TODO
 }
 
 func New() *Client {
@@ -29,7 +29,22 @@ func New() *Client {
 		rootURI = DefaultRootURI
 	}
 	cookieAuthToken := os.Getenv(envVarPrefix + "_COOKIE_AUTH_TOKEN")
-	return &Client{rootURI: rootURI, cookieAuthToken: cookieAuthToken}
+	c := &Client{}
+	return c.SetRootURI(rootURI).SetCookieAuthToken(cookieAuthToken)
+}
+func (c *Client) SetCookieAuthToken(cookieAuthToken string) *Client {
+	c.cookieAuthToken = cookieAuthToken
+	return c
+}
+func (c *Client) SetRootURI(rootURI string) *Client {
+	c.rootURI = rootURI
+	return c
+}
+func (c *Client) GetCookieAuthToken() string {
+	return c.cookieAuthToken
+}
+func (c *Client) GetRootURI() string {
+	return c.rootURI
 }
 
 func (c *Client) uri(path string, pathArgs ...interface{}) string {
@@ -39,9 +54,10 @@ func (c *Client) uri(path string, pathArgs ...interface{}) string {
 // do a request, return the undread response if no errors and 200 OK
 func (c *Client) doWithResponse(req *http.Request) (*http.Response, error) {
 	if c.cookieAuthToken == "" {
-		return nil, fmt.Errorf("missing auth-token for request")
+		return nil, fmt.Errorf("missing cookie.auth-token for request")
 	}
 	req.AddCookie(&http.Cookie{Name: "auth-token", Value: c.cookieAuthToken})
+	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36")
 	//req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", c.token.AccessToken))
 
 	resp, err := http.DefaultClient.Do(req)
